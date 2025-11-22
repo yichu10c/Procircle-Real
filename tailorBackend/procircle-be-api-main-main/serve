@@ -1,0 +1,121 @@
+#!/bin/bash
+
+# vars
+log_prefix="[$(date +"%Y-%m-%d %H:%M:%S")][DEPLOYMENT]"
+
+# get args
+environment=$1
+action=$2
+
+# validate env
+envstring=""
+case $environment in
+  "prod")
+    envstring="PRODUCTION"
+    ;;
+  "dev")
+    envstring="DEVELOPMENT"
+    ;;
+  "local")
+    envstring="LOCAL"
+    ;;
+  *)
+    echo "$log_prefix invalid environment! expected [prod, dev, local] got $environment"
+    exit
+    ;;
+esac
+
+# validate action
+actionstring=""
+case $action in
+  "run")
+    actionstring="RUN"
+    ;;
+  "rerun")
+    actionstring="RE-RUN"
+    ;;
+  "start")
+    actionstring="START"
+    ;;
+  "stop")
+    actionstring="STOP"
+    ;;
+  "restart")
+    actionstring="RESTART"
+    ;;
+  "cleanstart")
+    actionstring="CLEAN-START"
+    ;;
+  "cleanstop")
+    actionstring="CLEAN-STOP"
+    ;;
+  "cleanrestart")
+    actionstring="CLEAN-RESTART"
+    ;;
+  "log")
+    actionstring="LOG"
+    ;;
+  *)
+    echo "$log_prefix invalid action! expected [start, stop, restart, cleanstart, cleanstop, cleanrestart, log] got $actions"
+    exit
+    ;;
+esac
+
+# update prefix
+log_prefix+="[$envstring]"
+log_prefix+="[$actionstring]"
+
+# copy env
+echo "$log_prefix removing prev env file.."
+rm .env
+echo "$log_prefix copying env file.."
+cp ./envs/docker-$environment.env .env
+
+# run or stop docker
+case $action in
+  "run")
+    echo "$log_prefix executing... docker compose up"
+    docker compose up
+    echo "$log_prefix execute done"
+    ;;
+  "rerun")
+    echo "$log_prefix executing... docker compose up"
+    docker compose down -v && docker compose up --build
+    echo "$log_prefix execute done"
+    ;;
+  "start")
+    echo "$log_prefix executing... docker compose up"
+    docker compose up -d
+    echo "$log_prefix execute done"
+    ;;
+  "stop")
+    echo "$log_prefix executing... docker compose down"
+    docker compose down
+    echo "$log_prefix execute done"
+    ;;
+  "restart")
+    echo "$log_prefix executing... docker compose restart"
+    docker compose restart
+    echo "$log_prefix execute done"
+    ;;
+  "cleanstart")
+    echo "$log_prefix executing... docker compose down -v && docker compose build --no-cache && docker compose up -d"
+    docker compose down -v && docker compose build --no-cache && docker compose up -d
+    echo "$log_prefix execute done"
+    ;;
+  "cleanstop")
+    echo "$log_prefix executing... docker compose down -v"
+    docker compose down -v
+    echo "$log_prefix execute done"
+    ;;
+  "cleanrestart")
+    echo "$log_prefix executing... docker compose down -v && docker compose up --build -d"
+    docker compose down -v && docker compose up --build -d
+    echo "$log_prefix execute done"
+    ;;
+  "log")
+    echo "$log_prefix executing... docker compose logs --tail 100 -f"
+    docker compose logs --tail 100 --follow
+    echo "$log_prefix execute done"
+    ;;
+esac

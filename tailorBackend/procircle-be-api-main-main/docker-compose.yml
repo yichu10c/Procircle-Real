@@ -1,0 +1,62 @@
+version: '3.0'
+services:
+  backend_app:
+    container_name: backend_app
+    build:
+      context: .
+      dockerfile: ./backend.dockerfile
+    volumes:
+      - ./backend:/base
+      - ./database:/database
+      - ./envs:/envs
+      - ~/.aws:/root/.aws
+    env_file:
+      - ./.env
+    deploy:
+      resources:
+        limits:
+          cpus: "${app_cpu_limit}"
+          memory: "${app_memory_limit}"
+    command: bash -c "cd base && ./start ${environment}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:8000/healthcheck"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+    ports:
+      - 8000:8000
+
+  backend_job_worker:
+    container_name: backend_job_worker
+    build:
+      context: .
+      dockerfile: ./job_worker.dockerfile
+    working_dir: /base
+    volumes:
+      - ./backend:/base
+      - ./envs:/envs
+      - ~/.aws:/root/.aws
+    env_file:
+      - ./.env
+    deploy:
+      resources:
+        limits:
+          cpus: "${job_worker_cpu_limit}"
+          memory: "${job_worker_memory_limit}"
+    command: bash -c "./job_worker/start ${environment} && /usr/bin/supervisord -c job_worker/config/supervisord-${environment}.conf -n"
+
+  procircle_rabbitmq:
+    image: rabbitmq:management
+    container_name: procircle-rabbitmq
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "${rabbitmq_cpu_limit}"
+          memory: "${rabbitmq_memory_limit}"
+    environment:
+      RABBITMQ_DEFAULT_USER: root
+      RABBITMQ_DEFAULT_PASS: root
+    ports:
+      - 5672:5672      # RabbitMQ default port for communication
+      - 15672:15672    # RabbitMQ management UI port

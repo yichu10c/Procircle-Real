@@ -1,0 +1,8 @@
+#!/bin/sh
+
+environment=$1
+
+echo "[JOB_WORKER_START] copying env file"
+rm -f /base/.env
+cp /envs/app-$environment.env /base/.env
+
