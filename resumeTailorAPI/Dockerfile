@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+RUN pip install debugpy
 
 COPY . .
 
@@ -11,4 +12,6 @@ EXPOSE 8000
 
 EXPOSE 8080
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+EXPOSE 5678
+
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
