@@ -1,9 +1,9 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends, Body
 from typing import Optional
 from sqlalchemy.orm import Session
-from docx import Document
 from pydantic import BaseModel
 from src.resumeTailorService.tailor_service import TailorService
+from src.inbound.resume_processor import ResumeProcessor
 from src.database import get_db
 from src.models import User
 
@@ -32,35 +32,15 @@ async def tailor_resume(
     - resume_text: optional (text input)
     - resume_file: optional (.docx file)
     """
+    # Get resume text from either text input or file
+    resume_text = await ResumeProcessor.get_resume_text(resume_text, resume_file)
     
-    # Validate that either resume_text or resume_file is provided
-    if not resume_text and not resume_file:
-        raise HTTPException(
-            status_code=400,
-            detail="Provide either resume_text or resume_file"
-        )
-    
-    if resume_text and resume_file:
-        raise HTTPException(
-            status_code=400,
-            detail="Provide either resume_text OR resume_file, not both"
-        )
-    
-    # Extract resume text from file if provided
-    if resume_file:
-        if not resume_file.filename.endswith(".docx"):
-            raise HTTPException(status_code=400, detail="Only .docx files are supported.")
-        try:
-            contents = await resume_file.read()
-            with open("temp_resume.docx", "wb") as f:
-                f.write(contents)
-            doc = Document("temp_resume.docx")
-            resume_text = "\n".join([para.text for para in doc.paragraphs])
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to process file: {e}")
-    
-    # Call the orchestrator service to tailor the resume
-    tailored_response = await TailorService.tailor_resume_to_job(user_id, resume_text, job_description)
+    # Call the service to tailor the resume
+    tailored_response = await TailorService.tailor_resume_to_job(
+        user_id, 
+        resume_text, 
+        job_description
+    )
     
     return {
         "user_id": user_id,

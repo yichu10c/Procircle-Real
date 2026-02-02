@@ -1,4 +1,3 @@
-from src.resumeTailorService.data_processor import DataProcessor
 from src.resumeTailorService.prompt_builder import PromptBuilder
 from src.resumeTailorService.openai_client import OpenAIClient
 
@@ -12,17 +11,12 @@ class TailorService:
         Main orchestrator function that handles the entire tailoring workflow
         
         Steps:
-        1. Validate resume and job description
-        2. Build tailored prompt
-        3. Call OpenAI
-        4. Return tailored response
+        1. Build tailored prompt
+        2. Call OpenAI
+        3. Return tailored response
         """
-        # Validate inputs
-        validated_resume = DataProcessor.validate_resume_text(resume_text)
-        validated_job = DataProcessor.validate_job_description(job_description)
-        
         # Build prompt
-        prompt = PromptBuilder.build_tailor_prompt(user_id, validated_resume, validated_job)
+        prompt = PromptBuilder.build_tailor_prompt(user_id, resume_text, job_description)
 
         # Get response from OpenAI
         client = OpenAIClient()
