@@ -1,6 +1,6 @@
-from resumeTailorService.data_processor import DataProcessor
-from resumeTailorService.prompt_builder import PromptBuilder
-from resumeTailorService.openai_client import OpenAIClient
+from src.resumeTailorService.data_processor import DataProcessor
+from src.resumeTailorService.prompt_builder import PromptBuilder
+from src.resumeTailorService.openai_client import OpenAIClient
 
 
 class TailorService:

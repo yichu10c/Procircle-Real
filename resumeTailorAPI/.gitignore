@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.*.vault
+
+# Temporary files
+temp_resume.docx
+*.tmp
+*.temp
+*.log
+*.log.*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+resume_tailor.db
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE Caches
+.pylintrc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Python packaging
+*.whl
+*.dist-info/
+
+# Misc
+*.pid
+*.seed
+.python-version
+.ropeproject/
