@@ -1,5 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends, Body
-from typing import Optional
+from fastapi import APIRouter, UploadFile, File, Form, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from src.resumeTailorService.tailor_service import TailorService
@@ -19,32 +18,33 @@ router = APIRouter()
 async def tailor_resume(
     user_id: str = Form(...),
     job_description: str = Form(...),
-    resume_text: Optional[str] = Form(None),
-    resume_file: Optional[UploadFile] = File(None)
+    resume_file: UploadFile = File(...),
+    db: Session = Depends(get_db)
 ):
     """
     Tailor a resume to a job description.
-    Accepts either resume_text OR resume_file (not both).
     
     Multipart form data:
     - user_id: required
     - job_description: required
-    - resume_text: optional (text input)
-    - resume_file: optional (.docx file)
+    - resume_file: required (.docx file)
     """
-    # Get resume text from either text input or file
-    resume_text = await ResumeProcessor.get_resume_text(resume_text, resume_file)
-    
-    # Call the service to tailor the resume
+    saved_resume = await ResumeProcessor.save_resume_to_db(
+        user_id=int(user_id),
+        resume_file=resume_file,
+        db=db
+    )
+
     tailored_response = await TailorService.tailor_resume_to_job(
-        user_id, 
-        resume_text, 
-        job_description
+        resume_id=saved_resume.resumeId,
+        job_description=job_description,
+        db=db
     )
     
     return {
         "user_id": user_id,
-        "resume_text": resume_text,
+        "resume_id": saved_resume.resumeId,
+        "resume_text": saved_resume.resumeText,
         "job_description": job_description,
         "tailored_response": tailored_response,
         "message": "Resume tailored successfully"
@@ -72,6 +72,3 @@ def create_user(request: CreateUserRequest, db: Session = Depends(get_db)):
         "lastName": new_user.lastName,
         "message": "User created successfully"
     }
-
-
-

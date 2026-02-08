@@ -7,4 +7,4 @@ services:
     volumes:
       - .:/app
     environment:
-      - OPENAI_API_KEY=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
+      - OPENAI_API_KEY=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

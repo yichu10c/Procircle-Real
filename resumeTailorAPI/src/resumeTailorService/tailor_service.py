@@ -1,24 +1,18 @@
 from src.resumeTailorService.prompt_builder import PromptBuilder
 from src.resumeTailorService.openai_client import OpenAIClient
+from src.models import Resume
+from sqlalchemy.orm import Session
 
 
 class TailorService:
-    """Orchestrates the entire resume tailoring process"""
 
     @staticmethod
-    async def tailor_resume_to_job(user_id: str, resume_text: str, job_description: str) -> str:
-        """
-        Main orchestrator function that handles the entire tailoring workflow
-        
-        Steps:
-        1. Build tailored prompt
-        2. Call OpenAI
-        3. Return tailored response
-        """
-        # Build prompt
-        prompt = PromptBuilder.build_tailor_prompt(user_id, resume_text, job_description)
+    async def tailor_resume_to_job(resume_id: int, job_description: str, db: Session) -> str:
+        resume = db.query(Resume).filter(Resume.resumeId == resume_id).first()
+        if not resume:
+            raise ValueError(f"Resume with id {resume_id} not found")
 
-        # Get response from OpenAI
+        prompt = PromptBuilder.build_tailor_prompt(resume.resumeText, job_description)
         client = OpenAIClient()
         tailored_response = await client.tailor_resume(prompt)
 

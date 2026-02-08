@@ -8,8 +8,6 @@ RUN pip install debugpy
 
 COPY . .
 
-EXPOSE 8000
-
 EXPOSE 8080
 
 EXPOSE 5678
