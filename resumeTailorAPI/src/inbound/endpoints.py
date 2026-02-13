@@ -27,18 +27,23 @@ async def tailor_resume(
     - resume_id: required (ID of previously uploaded resume)
     - job_description: required
     """
-    tailored_response = await TailorService.tailor_resume_to_job(
-        resume_id=resume_id,
-        job_description=job_description,
-        db=db
-    )
-    
-    return {
-        "resume_id": resume_id,
-        "job_description": job_description,
-        "tailored_response": tailored_response,
-        "message": "Resume tailored successfully"
-    }
+    try:
+        tailored_response = await TailorService.tailor_resume_to_job(
+            resume_id=resume_id,
+            job_description=job_description,
+            db=db
+        )
+        
+        return {
+            "resume_id": resume_id,
+            "job_description": job_description,
+            "tailored_response": tailored_response,
+            "message": "Resume tailored successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
 @router.post("/api/v1/users")
@@ -52,16 +57,20 @@ def create_user(request: CreateUserRequest, db: Session = Depends(get_db)):
         "lastName": "Doe"
     }
     """
-    new_user = User(firstName=request.firstName, lastName=request.lastName)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return {
-        "userId": new_user.userId,
-        "firstName": new_user.firstName,
-        "lastName": new_user.lastName,
-        "message": "User created successfully"
-    }
+    try:
+        new_user = User(firstName=request.firstName, lastName=request.lastName)
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return {
+            "userId": new_user.userId,
+            "firstName": new_user.firstName,
+            "lastName": new_user.lastName,
+            "message": "User created successfully"
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
 
 
 @router.post("/api/v1/users/{user_id}/resumes")
@@ -79,19 +88,25 @@ async def upload_resume(
     Multipart form data:
     - resume_file: required (.docx file)
     """
-    user = db.query(User).filter(User.userId == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    saved_resume = await ResumeProcessor.save_resume_to_db(
-        user_id=user_id,
-        resume_file=resume_file,
-        db=db
-    )
-    
-    return {
-        "resumeId": saved_resume.resumeId,
-        "userId": saved_resume.userId,
-        "fileName": saved_resume.fileName,
-        "message": "Resume uploaded successfully"
-    }
+    try:
+        user = db.query(User).filter(User.userId == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        saved_resume = await ResumeProcessor.save_resume_to_db(
+            user_id=user_id,
+            resume_file=resume_file,
+            db=db
+        )
+        
+        return {
+            "resumeId": saved_resume.resumeId,
+            "userId": saved_resume.userId,
+            "fileName": saved_resume.fileName,
+            "message": "Resume uploaded successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to upload resume: {str(e)}")
