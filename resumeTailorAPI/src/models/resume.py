@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy.sql import func
 from src.database import Base
 
 
@@ -9,6 +10,7 @@ class Resume(Base):
     userId = Column(Integer, ForeignKey("user.userId"), nullable=False, index=True)
     fileName = Column(String(255), nullable=False)
     resumeText = Column(Text, nullable=False)
+    createdAt = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     def __repr__(self):
         return f"<Resume(resumeId={self.resumeId}, userId={self.userId}, fileName='{self.fileName}')>"

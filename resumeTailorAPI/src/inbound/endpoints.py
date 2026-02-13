@@ -66,6 +66,7 @@ def create_user(request: CreateUserRequest, db: Session = Depends(get_db)):
             "userId": new_user.userId,
             "firstName": new_user.firstName,
             "lastName": new_user.lastName,
+            "createdAt": new_user.createdAt.isoformat() if new_user.createdAt else None,
             "message": "User created successfully"
         }
     except Exception as e:
@@ -103,6 +104,7 @@ async def upload_resume(
             "resumeId": saved_resume.resumeId,
             "userId": saved_resume.userId,
             "fileName": saved_resume.fileName,
+            "createdAt": saved_resume.createdAt.isoformat() if saved_resume.createdAt else None,
             "message": "Resume uploaded successfully"
         }
     except HTTPException:
