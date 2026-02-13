@@ -37,6 +37,22 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     }
 
 
+@router.get("/api/v1/resumes/{resume_id}")
+def get_resume(resume_id: int, db: Session = Depends(get_db)):
+    """
+    Get a specific resume by ID
+    """
+    resume = db.query(Resume).filter(Resume.resumeId == resume_id).first()
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    return {
+        "resumeId": resume.resumeId,
+        "userId": resume.userId,
+        "fileName": resume.fileName,
+        "resumeText": resume.resumeText
+    }
+
+
 @router.get("/api/v1/resumes")
 def get_all_resumes(db: Session = Depends(get_db)):
     """

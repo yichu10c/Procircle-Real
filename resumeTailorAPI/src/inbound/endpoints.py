@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, Depends
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from src.resumeTailorService.tailor_service import TailorService
@@ -16,35 +16,25 @@ router = APIRouter()
 
 @router.post("/api/v1/tailor-resume")
 async def tailor_resume(
-    user_id: str = Form(...),
+    resume_id: int = Form(...),
     job_description: str = Form(...),
-    resume_file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
     """
     Tailor a resume to a job description.
     
     Multipart form data:
-    - user_id: required
+    - resume_id: required (ID of previously uploaded resume)
     - job_description: required
-    - resume_file: required (.docx file)
     """
-    saved_resume = await ResumeProcessor.save_resume_to_db(
-        user_id=int(user_id),
-        resume_file=resume_file,
-        db=db
-    )
-
     tailored_response = await TailorService.tailor_resume_to_job(
-        resume_id=saved_resume.resumeId,
+        resume_id=resume_id,
         job_description=job_description,
         db=db
     )
     
     return {
-        "user_id": user_id,
-        "resume_id": saved_resume.resumeId,
-        "resume_text": saved_resume.resumeText,
+        "resume_id": resume_id,
         "job_description": job_description,
         "tailored_response": tailored_response,
         "message": "Resume tailored successfully"
@@ -71,4 +61,37 @@ def create_user(request: CreateUserRequest, db: Session = Depends(get_db)):
         "firstName": new_user.firstName,
         "lastName": new_user.lastName,
         "message": "User created successfully"
+    }
+
+
+@router.post("/api/v1/users/{user_id}/resumes")
+async def upload_resume(
+    user_id: int,
+    resume_file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload a resume for a specific user without tailoring.
+    
+    Path parameter:
+    - user_id: The user ID
+    
+    Multipart form data:
+    - resume_file: required (.docx file)
+    """
+    user = db.query(User).filter(User.userId == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    saved_resume = await ResumeProcessor.save_resume_to_db(
+        user_id=user_id,
+        resume_file=resume_file,
+        db=db
+    )
+    
+    return {
+        "resumeId": saved_resume.resumeId,
+        "userId": saved_resume.userId,
+        "fileName": saved_resume.fileName,
+        "message": "Resume uploaded successfully"
     }
